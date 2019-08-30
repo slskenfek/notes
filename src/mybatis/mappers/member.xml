@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+      PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- mappers폴더 내부에 다른 .xml파일의 SQL문과 구별하기 위해 mapper.member로 네임스페이스를 지정함. -->
+<mapper namespace="mapper.member">
+	<!-- SQL문을 실행한 후 반환되는 회원 정보 레코드를 저장하기 위한 resultMap을 지정함. 
+		 풀이: type="memberVO" 부분은  SQL문을 실행한 후 반환되는 레코드들을 
+		      SqlMapConfig.xml파일에 작성된 <typeAli6as>태그에서 지정한 memberVO객체에 저장 합니다.
+	 -->
+	<resultMap id="memResult" type="memberVO">
+		<!--  result태그의 구문은  검색한 결과 레코드들의 컬럼 이름에 대해  
+		     memberVO객체의 같은 이름의 변수에 값을 저장 합니다. --> 
+		<result property="id" column="id" />
+        <result property="pwd" column="pwd" />
+        <result property="name" column="name" />
+        <result property="email" column="email" />
+        <result property="joinDate" column="joinDate" />
+	</resultMap> 
+	
+	 
+	 <!--조회한 레코드를 지정한 컬럼이름을 key, 값을 value로 해서 지정합니다. 
+	<resultMap id="memResult" type="java.util.HashMap">
+      <result property="id" column="id" />
+      <result property="pwd" column="pwd" />
+      <result property="name" column="name" />
+      <result property="email" column="email" />
+      <result property="joinDate" column="joinDate" />
+   </resultMap> 
+--> 
+<!-- 조회한 회원정보를 HashMap에 저장합니다. -->
+	<select id="selectAllMemberList" resultMap="memResult">
+      <![CDATA[
+         select * from t_member	order by joinDate desc	 	
+      ]]>
+	</select>
+	<!-- Tip) SQL문의 > <  <=  >= 같은 연산자들을 XML 파일에서 작성하면 
+	                  연산자가 아닌 특수 문자로 인식하므로 오류가 발생합니다. 
+	          이러한 연산자들도 SQL문의 일부라는 것을 알려주기 위해 <![CDATA[  ..... ]]> 태그 안에 작성해야 합니다.
+	  -->
+	
+	
+
+	<select id="selectName" resultType="String">
+    <![CDATA[
+	select name from t_member
+	where id = 'hong'			
+    ]]>
+	</select>
+	
+	<select id="selectPwd" resultType="int" >
+	  <![CDATA[ 
+	    select pwd from t_member 
+	    where id = 'hong'
+	 ]]>
+	 </select> 
+	 
+<!--
+설명1. 
+<select>태그에 parameterType속성값은  전달되는 조건 값의 데이터 타입으로 지정합니다.
+ 조건 값이 문자열인 경우는 parameterType속성값을 String으로 , 정수인경우는 int로 설정 합니다.
+설명2.
+MemberDAO에서 메서드 호출시 전달된 조건 값은 매개변수 이름으로 SQL문의 조건식에
+#{전달된 매개변수이름}형식으로 사용합니다.
+그리고 조회되는 레코드가 한 개인 경우는 resultType속성에 레코드를 저장할 memberVO를 설정합니다.
+
+설명3.     
+id = "MemberDAO에서 SQL문 호출하는 id값을 지정 함'
+resultType = "조회되는 레코드가 한 개인 경우는 resultType속성에 레코드를 저장할 memberVO를 설정합니다."
+parameterType="MemberDAO에서 SQL문 호출시 전달되는 매개변수의 데이터 타입을 지정함."   
+
+설명4.
+select * from t_member where id=#{id}중...
+
+id=#{id}부분 설명  
+			 MemberDAO에서 메서드를 호출하면서  parameterType으로 전달된 매개변수 이름을
+             select문의 id컬럼의 조건값으로 사용합니다.
+-->
+	<select id="selectMemberById" resultType="memberVO"  parameterType="String" >
+      <![CDATA[
+         select * from t_member
+         where
+         id=#{id}			
+      ]]>
+	 </select>	
+	
+	<select id="selectMemberByPwd" resultMap="memResult"  parameterType="int" >
+      <![CDATA[
+         select * from t_member
+         where
+         pwd = #{pwd}			
+      ]]>
+    </select>
+ 
+ 	
+ 	<!-- 
+ 		insert문은 <insert>태그를 이용해서 작성하고 
+ 		등록할 회원정보를  memberVO빈에 설정한후  <insert>태스의 parameterType속성의
+ 		memberVO로 전달합니다.
+ 		values 다음에 #{속성이름}을 나열하면 memberVO빈의 속성 값이 설정됩니다.
+ 	
+ 	<insert id="insertMember" parameterType="memberVO">
+ 		<![CDATA[
+ 			insert into t_member(id,pwd,name,email)
+ 			values(#{id}, #{pwd}, #{name}, #{email})
+ 	  	]]>
+ 	</insert>
+  -->
+  <!-- insert문의 parameterType을 HashMap으로 지정합니다.
+       MemberDAO에서 회원정보를 HashMap에 담아서 전달합니다.
+   -->
+  	<insert id="insertMember2" parameterType="java.util.Map">
+ 		<![CDATA[
+ 			insert into t_member(id,pwd,name,email)
+ 			values(#{id}, #{pwd}, #{name}, #{email})
+ 	  	]]>
+ 	  	<!-- HashMap에 각각의 key로 저장된 value값을 가져와 테이블에 추가합니다. -->
+ 	</insert>
+ 	
+ 	<!-- 
+ 		update문은  <update>태그를 이용해 작성하고,
+ 		parameterType속성은 MembeDAO에서  update()메소드 호출할떄 전달된 MembeVO클래스타입으로 지정합니다.
+ 	 	update문에서  수정할 컬럼 값들을 MemberVO속성이름으로 지정하고,
+ 	 	수정할 회원 ID에 해당하는 조건값도 MemberVO의 id속성값으로 지정합니다.
+ 	 -->
+ 	<update id="updateMember" parameterType="memberVO">
+ 		<![CDATA[
+ 			update t_member
+ 			set pwd=#{pwd}, name=#{name}, email=#{email}
+ 			where
+ 			id=#{id}
+ 		]]>
+ 	</update>
+ 	
+ 	<delete id="deleteMember" parameterType="String">
+ 		<![CDATA[
+ 			delete from t_member
+ 			where
+ 			id=#{id}
+ 		]]>
+ 	</delete>
+ 	
+ 	<!-- 
+ 		매퍼 파일(member.xml)에서 공통 SQL문에 <sql>태그를 적용해 refid를 할당하였습니다.
+ 		그런다음 다른 SQL문에서 <include>태그의 refid에 미리 설정한 공통SQL문의 id를 설정하여 편리하게 사용하고 있음
+ 		이처럼 매퍼파일의 SQL문이 복잡할때는 공통으로 사용하는 SQL문에 미리 <sql>태그를 적용한후
+ 		다른 SQL문에서 재사용하는 방법이 유용합니다.
+ 	 -->	
+ 	<sql id="a"> <!-- <sql>태그를 이용해 공통 SQL문의 refid를 a로 지정함. -->
+ 		<![CDATA[
+ 		  select * from t_member
+ 		]]>			
+ 	</sql>
+ 
+ 	<select id="searchMember" parameterType="memberVO" resultMap="memResult">
+ 		
+ 		<include refid="a"/> <!-- <include>태그를 이용해 공통 SQL문을 불러와 재사용 할수 있음 -->
+ 		
+ 		<where>			<!-- <where>태그를 이용해 SQL문의 where절을 구성합니다. -->		
+ 				<choose>
+ 					<!-- name과  email속성값이 모두 있을 경우 (모두 입력 했을 경우)  -->
+ 					<when test="name != '' and name != null and email != ''  and email != null">
+ 						name=#{name} and email=#{email}
+ 					</when>
+ 					
+ 					<!-- name속성값만 있을 경우(name만 입력했을 경우) -->
+ 					<when test="name != '' and name != null">
+ 						name=#{name}
+ 					</when>
+ 					
+ 					<!-- email속성값만 있을 경우(email주소만 입력 했을 경우) -->
+ 					<when test="email != '' and email != null">
+ 					    email=#{email}
+ 					</when>				
+ 				</choose>		
+ 		</where>			
+ 			order by joinDate desc	
+ 	</select>
+ 	
+ 	<!--
+  	<select id="searchMember" parameterType="memberVO" resultMap="memResult">
+ 		<include refid="a"/>
+ 		<where>			<where>태그를 이용해 SQL문의 where절을 구성합니다. 
+ 		
+ 			      name속성 값을 체크해 공백이 아니거나  null이 아니면  
+ 				 'name=name속성값' 조건절을 공통 SQL문 뒤에 추가합니다.
+ 			
+ 			<if test="name != '' and name != null">
+ 				name = #{name}
+ 			</if>
+ 			
+ 			<if test="email != ''  and  email != null">
+ 				and email = #{email}
+ 			</if>
+ 			
+ 		</where>	
+ 	</select>
+-->
+
+	<!-- SQL문으로  ArrayList데이터가 전달되면  <foreach>태그로 ArrayList데이터의 값을 반복해서 접근한후
+	     in 조건절에 조건값으로 추가합니다.
+	 -->
+	<select id="foreachSelect" resultMap="memResult" parameterType="java.util.ArrayList">
+		
+		<include refid="a"/>
+		
+		where name in
+		<!-- foreach문을 이용해 반복해서  ArrayList에 저장되어 있는 바보 슈퍼맨 김개똥 -->
+		<foreach  item="item" collection="list" open="(" separator="," close=")">
+			#{item}
+		</foreach>
+		order by joinDate desc
+	</select>
+
+
+<!-- Mysql과 달리 오라클에서는 insert문을 동시에 여러개 사용하면 오류가 발생합니다.
+	오라클에서는 <forech>태그의 open과 close속성에 SQL문을 설정 한후 
+	서브 쿼리 형식으로 다중 insert문을 구현합니다.
+ -->
+ <!-- 
+	<insert id="foreachInsert" parameterType="java.util.Map">
+		INSERT INTO t_member(id, pwd, name, email)
+		values
+		<foreach item="item" collection="list">
+			(#{item.id},
+			 #{item.pwd},
+			 #{item.name},
+			 #{item.email}
+			)
+		</foreach>
+	</insert>
+ -->
+
+	<insert id="foreachInsert" parameterType="java.util.Map">
+											  <!-- <foreach>태그로 반복 작업을 할때는 처음에 
+											  	   INSERT ALL을 추가합니다.
+											   -->
+		<foreach item="item" collection="list" open="INSERT ALL" 
+											   separator=" " 
+											   close="SELECT * FROM DUAL">
+				INTO  t_member(id, pwd, name, email)
+				values (#{item.id},
+					 	#{item.pwd},
+					 	#{item.name},
+					 	#{item.email})
+		
+		</foreach>
+	
+	
+	</insert>
+
+
+	<!--  마이바티스에서 오라클연동해  like 검색하는 방법 
+		  결론 : 마이바티스에서 오라클의 like를 검색할떄는 '%'기호와 조건 값 사이에 반드시 ||기호를 사용해서
+		            연결해 주어야 합니다.
+	-->
+ 	
+	<select id="selectlike" resultMap="memResult" parameterType="String">
+	<!-- 
+		<![CDATA[
+ 		  select * from t_member
+ 		  where
+ 		  name like '%'#{name}'%'  이렇게 작성하면 실행시 오류가 발생함.
+ 		]]>		
+	-->
+	   <![CDATA[
+ 		  select * from t_member
+ 		  where
+ 		  name like '%' || #{name} || '%'  	  
+ 		]]>	
+
+		<!-- 
+			#{name} 앞에  '%' ||를 붙입니다.
+		          그리고 뒤에는  || '%'를 붙입니다.
+		  -->
+	</select>
+
+	<!-- 
+		마이바티스 참고 레퍼런스 사이트 
+		http://www.mybatis.org/mybatis-3/ko/dynamic-sql.html
+	 -->
+
+
+
+
+ </mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
